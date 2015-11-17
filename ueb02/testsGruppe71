@@ -1,0 +1,524 @@
+import org.junit.Test;
+import org.junit.Assert;
+
+public class CursorTests {
+
+    /**
+     * Testet, ob ein Cursor korrekt in eine String-Liste umgewandelt wird.
+     */
+    @Test
+    public void test_toList() {
+        String[] text =
+                { "The", "quick", "brown", "fox", "jumps", "over", "the",
+                        "lazy", "dog" };
+        StringList textList = StringList.fromArray(text);
+
+        Cursor cursor = new Cursor(textList);
+        StringList cursorList = cursor.toList();
+
+        String[] cursorArray = cursorList.toArray();
+        Assert.assertArrayEquals(text, cursorArray);
+    }
+
+    /**
+     * Testet, ob die korrekte Anzahl der Textzeilen, auf den der Cursor
+     * arbeitet, berechnet wird.
+     */
+    @Test
+    public void test_length() {
+        // Für genau 1 Zeile.
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        int result = testCursor.length();
+        int expResult = 1;
+        Assert.assertEquals(expResult, result);
+
+        // Für 6 Zeilen.
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        result = testCursor.length();
+        expResult = 6;
+        Assert.assertEquals(expResult, result);
+    }
+
+    /**
+     * Testet, ob die korrekte Zeilennummer, auf der der Cursor steht,
+     * zurückgegeben wird.
+     */
+    @Test
+    public void test_position() {
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        Cursor testCursor = this.arrayToCursor(sixElements);
+
+        // Für Anfangsposition:
+        int result = testCursor.position();
+        int expResult = 0;
+        Assert.assertEquals(expResult, result);
+
+        // Für Mittelposition:
+        testCursor.moveDown();
+        testCursor.moveDown();
+        result = testCursor.position();
+        expResult = 2;
+        Assert.assertEquals(expResult, result);
+
+        // Für Endposition:
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        result = testCursor.position();
+        expResult = 5;
+        Assert.assertEquals(expResult, result);
+    }
+
+    /**
+     * Testet, ob der Cursor korrekt zeilenweise nach unten bewegt wird.
+     */
+    @Test
+    public void test_moveDown() {
+        // Cursorbewegung schlägt fehl: Kein weiteres Element.
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        boolean result = testCursor.moveDown();
+        boolean expResult = false;
+        Assert.assertEquals(expResult, result);
+
+        // Eine Bewegung nach unten.
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        result = testCursor.moveDown();
+        expResult = true;
+        Assert.assertEquals(expResult, result);
+        String expCursorString = "[\"1\", >\"2\"<, \"3\", \"4\", \"5\", \"6\"]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+    }
+
+    /**
+     * Testet, ob der Cursor korrekt zeilenweise nach oben bewegt wird.
+     */
+    @Test
+    public void test_moveUp() {
+        // Cursorbewegung schlägt fehl: Kein weiteres Element.
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        boolean result = testCursor.moveUp();
+        boolean expResult = false;
+        Assert.assertEquals(expResult, result);
+
+        // Eine Bewegung nach oben.
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        result = testCursor.moveDown();
+        result = testCursor.moveDown();
+        result = testCursor.moveUp();
+        expResult = true;
+        Assert.assertEquals(expResult, result);
+        String expCursorString = "[\"1\", >\"2\"<, \"3\", \"4\", \"5\", \"6\"]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+    }
+
+    /**
+     * Testet, ob der Cursor korrekt wieder in die erste Zeile zurückspringt.
+     */
+    @Test
+    public void test_home() {
+        // Bei nur 1 Element:
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        testCursor.home();
+        String stringResult = testCursor.toString();
+        String expStringResult = "[>\"1\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Bei mehreren Elementen:
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.home();
+        stringResult = testCursor.toString();
+        expStringResult = "[>\"1\"<, \"2\", \"3\", \"4\", \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob der Cursor korrekt in die letzt Zeile springt.
+     */
+    @Test
+    public void test_end() {
+        // Bei nur 1 Element:
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        testCursor.end();
+        String stringResult = testCursor.toString();
+        String expStringResult = "[>\"1\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Bei mehreren Elementen:
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        testCursor.end();
+        stringResult = testCursor.toString();
+        expStringResult = "[\"1\", \"2\", \"3\", \"4\", \"5\", >\"6\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob der Text der aktuellen Zeile korrekt ausgetauscht wird.
+     */
+    @Test
+    public void test_replaceLine() {
+        // Ersetze das erste Element:
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        Cursor testCursor = this.arrayToCursor(sixElements);
+        String oldLine = testCursor.replaceLine("new");
+        String expOldLine = "1";
+        Assert.assertEquals(expOldLine, oldLine);
+        String stringResult = testCursor.toString();
+        String expStringResult =
+                "[>\"new\"<, \"2\", \"3\", \"4\", \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Ersetzte Element in der Mitte:
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        oldLine = testCursor.replaceLine("new2");
+        expOldLine = "4";
+        Assert.assertEquals(expOldLine, oldLine);
+        stringResult = testCursor.toString();
+        expStringResult = "[\"new\", \"2\", \"3\", >\"new2\"<, \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob ein neues Element korrekt nach der aktuellen Cursorposition
+     * eingefügt wird.
+     */
+    @Test
+    public void test_insertAfter() {
+        // Einfügen nach dem ersten Element:
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        Cursor testCursor = this.arrayToCursor(sixElements);
+        testCursor.insertAfter("new");
+        String stringResult = testCursor.toString();
+        String expStringResult =
+                "[>\"1\"<, \"new\", \"2\", \"3\", \"4\", \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Einfügen nach dem letzten Element:
+        testCursor.end();
+        testCursor.insertAfter("new2");
+        stringResult = testCursor.toString();
+        expStringResult =
+                "[\"1\", \"new\", \"2\", \"3\", \"4\", \"5\", >\"6\"<, \"new2\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob ein neues Element korrekt vor der aktuellen Cursorposition
+     * eingefügt wird.
+     */
+    @Test
+    public void test_insertBefore() {
+        // Einfügen vor dem ersten Element:
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        Cursor testCursor = this.arrayToCursor(sixElements);
+        testCursor.insertBefore("new");
+        String stringResult = testCursor.toString();
+        String expStringResult =
+                "[\"new\", >\"1\"<, \"2\", \"3\", \"4\", \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Einfügen vor dem letzten Element:
+        testCursor.end();
+        testCursor.insertBefore("new2");
+        stringResult = testCursor.toString();
+        expStringResult =
+                "[\"new\", \"1\", \"2\", \"3\", \"4\", \"5\", \"new2\", >\"6\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob die aktuelle Zeile korrekt mit Delete gelöscht wird.
+     */
+    @Test
+    public void test_delete() {
+        // Löschen der ersten Zeile
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        Cursor testCursor = this.arrayToCursor(sixElements);
+        String oldLine = testCursor.delete();
+        String expOldLine = "1";
+        Assert.assertEquals(expOldLine, oldLine);
+        String stringResult = testCursor.toString();
+        String expStringResult = "[>\"2\"<, \"3\", \"4\", \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Löschen der letzten Zeile
+        testCursor.end();
+        oldLine = testCursor.delete();
+        expOldLine = "6";
+        Assert.assertEquals(expOldLine, oldLine);
+        stringResult = testCursor.toString();
+        expStringResult = "[\"2\", \"3\", \"4\", \"5\", >\"\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Löschen von nur 1 Zeile
+        String[] oneElement = { "1" };
+        testCursor = this.arrayToCursor(oneElement);
+        oldLine = testCursor.delete();
+        expOldLine = "1";
+        Assert.assertEquals(expOldLine, oldLine);
+        stringResult = testCursor.toString();
+        expStringResult = "[>\"\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob die aktuelle Zeile korrekt mit Backspace gelöscht wird.
+     */
+    @Test
+    public void test_backspace() {
+        // Löschen der ersten Zeile
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        Cursor testCursor = this.arrayToCursor(sixElements);
+        String oldLine = testCursor.backspace();
+        String expOldLine = "1";
+        Assert.assertEquals(expOldLine, oldLine);
+        String stringResult = testCursor.toString();
+        String expStringResult = "[>\"\"<, \"2\", \"3\", \"4\", \"5\", \"6\"]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Löschen der letzten Zeile
+        testCursor.end();
+        oldLine = testCursor.backspace();
+        expOldLine = "6";
+        Assert.assertEquals(expOldLine, oldLine);
+        stringResult = testCursor.toString();
+        expStringResult = "[\"\", \"2\", \"3\", \"4\", >\"5\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // Löschen von nur 1 Zeile
+        String[] oneElement = { "1" };
+        testCursor = this.arrayToCursor(oneElement);
+        oldLine = testCursor.backspace();
+        expOldLine = "1";
+        Assert.assertEquals(expOldLine, oldLine);
+        stringResult = testCursor.toString();
+        expStringResult = "[>\"\"<]";
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob korrekt das aktuelle Element mit dem vorherigen vertauscht
+     * wird.
+     */
+    @Test
+    public void test_swapWithPrevious() {
+        // Tausch schlägt fehl: Kein weiteres Element.
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        boolean result = testCursor.swapWithPrevious();
+        boolean expResult = false;
+        Assert.assertEquals(expResult, result);
+
+        // Tausch in der Mitte.
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        result = testCursor.swapWithPrevious();
+        expResult = true;
+        Assert.assertEquals(expResult, result);
+        String expCursorString = "[\"1\", \"2\", \"4\", >\"3\"<, \"5\", \"6\"]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+    }
+
+    /**
+     * Testet, ob korrekt das aktuelle Element mit dem vorherigen vertauscht
+     * wird.
+     */
+    @Test
+    public void test_swapWithNext() {
+        // Tausch schlägt fehl: Kein weiteres Element.
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        boolean result = testCursor.swapWithNext();
+        boolean expResult = false;
+        Assert.assertEquals(expResult, result);
+
+        // Tausch in der Mitte.
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        result = testCursor.swapWithNext();
+        expResult = true;
+        Assert.assertEquals(expResult, result);
+        String expCursorString = "[\"1\", \"2\", \"3\", >\"5\"<, \"4\", \"6\"]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+    }
+
+    /**
+     * Testet, ob das aktuelle Element korrekt dupliziert wird.
+     */
+    @Test
+    public void test_duplicateLine() {
+        // Mit nur einem Element.
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        testCursor.duplicateLine();
+        String expCursorString = "[\"1\", >\"1\"<]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+
+        // Duplizieren in der Mitte.
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.duplicateLine();
+        expCursorString = "[\"1\", \"2\", \"3\", \"4\", >\"4\"<, \"5\", \"6\"]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+    }
+
+    /**
+     * Testet, ob das Umdrehen aller Elemente funktioniert.
+     */
+    @Test
+    public void test_reverse() {
+        // Mit nur einem Element
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        testCursor.reverse();
+        String expCursorString = "[>\"1\"<]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+
+        // Mit mehreren Elementen
+        String[] sixElements = { "1", "2", "3", "4", "5", "6" };
+        testCursor = this.arrayToCursor(sixElements);
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.moveDown();
+        testCursor.reverse();
+        expCursorString = "[\"6\", \"5\", >\"4\"<, \"3\", \"2\", \"1\"]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expCursorString, stringResult);
+    }
+
+    /**
+     * Testet, ob das Rückgängigmachen korrekt funktioniert.
+     */
+    @Test
+    public void test_undo() {
+        // Keine vorherige Aktion
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        boolean expResult = false;
+        boolean result = testCursor.undo();
+        Assert.assertEquals(expResult, result);
+        String expStringResult = "[>\"1\"<]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // 1 vorherige Aktion
+        testCursor.insertAfter("2");
+        testCursor.moveDown();
+        expResult = true;
+        result = testCursor.undo();
+        Assert.assertEquals(expResult, result);
+        expStringResult = "[>\"1\"<]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // 3 vorherige Aktionen
+        testCursor.insertAfter("2");
+        testCursor.moveDown();
+        testCursor.insertAfter("3");
+        testCursor.moveDown();
+        testCursor.insertAfter("4");
+        testCursor.moveDown();
+        expResult = true;
+        // 1. Schritt zurück:
+        result = testCursor.undo();
+        Assert.assertEquals(expResult, result);
+        expStringResult = "[\"1\", >\"2\"<, \"3\"]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+        // 2. Schritt zurück:
+        result = testCursor.undo();
+        Assert.assertEquals(expResult, result);
+        expStringResult = "[>\"1\"<, \"2\"]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+        // 3. Schritt zurück:
+        result = testCursor.undo();
+        Assert.assertEquals(expResult, result);
+        expStringResult = "[>\"1\"<]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Testet, ob das Wiederherstellen korrekt funktioniert.
+     */
+    @Test
+    public void test_redo() {
+        // Keine zukünftige Aktion
+        String[] oneElement = { "1" };
+        Cursor testCursor = this.arrayToCursor(oneElement);
+        boolean expResult = false;
+        boolean result = testCursor.redo();
+        Assert.assertEquals(expResult, result);
+        String expStringResult = "[>\"1\"<]";
+        String stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // 1 zukünftige Aktion, die nicht wiederhergestellt werden kann
+        testCursor.insertAfter("2");
+        testCursor.moveDown();
+        testCursor.undo();
+        testCursor.insertAfter("3");
+
+        result = testCursor.redo();
+        Assert.assertEquals(expResult, result);
+        expStringResult = "[>\"1\"<, \"3\"]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+
+        // 1 zukünftige Aktion, die wiederhergestellt werden kann
+        testCursor.insertAfter("2");
+        testCursor.moveDown();
+        testCursor.undo();
+        expResult = true;
+
+        result = testCursor.redo();
+        Assert.assertEquals(expResult, result);
+        expStringResult = "[>\"1\"<, \"2\", \"3\"]";
+        stringResult = testCursor.toString();
+        Assert.assertEquals(expStringResult, stringResult);
+    }
+
+    /**
+     * Hilfsmethode, die ein String-Array in einen Cursor umwandelt.
+     * 
+     * @param stringArray Das String-Array, aus dem der Cursor gebaut werden
+     *            soll.
+     * @return Den neuen Cursor.
+     */
+    private Cursor arrayToCursor(String[] stringArray) {
+        StringList stringList = StringList.fromArray(stringArray);
+        return new Cursor(stringList);
+    }
+}
