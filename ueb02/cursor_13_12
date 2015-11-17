@@ -1,0 +1,451 @@
+import org.junit.Test;
+import org.junit.Assert;
+
+public class CursorTests {
+
+	@Test
+	public void test_toList() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		StringList cursorList = cursor.toList();
+
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text, cursorArray);
+	}
+
+	@Test
+	public void test_position() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveUp();
+
+		Assert.assertEquals(2, cursor.position());
+	}
+
+	@Test
+	public void test_length() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		Assert.assertEquals(9, cursor.length());
+	}
+
+	@Test
+	public void test_home() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveUp();
+		cursor.moveUp();
+		cursor.home();
+		StringList cursorList = cursor.toList();
+
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text, cursorArray);
+	}
+
+	@Test
+	public void test_end() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.end();
+
+		Assert.assertEquals("dog", cursor.getLine());
+	}
+
+	@Test
+	public void test_replaceLine() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+
+		String[] text2 = { "The", "quick", "brown", "cat", "jumps", "over",
+				"the", "lazy", "dog" };
+
+		String replacedLine = "";
+
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveDown();
+		replacedLine = cursor.replaceLine("cat");
+
+		StringList cursorList = cursor.toList();
+
+		// Array überprüfen
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text2, cursorArray);
+
+		// Rückgabewert überprüfen
+		Assert.assertEquals("fox", replacedLine);
+	}
+
+	@Test
+	public void test_insertAfterAndBefore() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+
+		String[] text2 = { "The", "quick", "and", "sometimes", "lazy", "brown",
+				"fox", "jumps", "over", "the", "lazy", "dog" };
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.moveDown();
+		cursor.insertAfter("and");
+		cursor.moveDown();
+		cursor.insertAfter("sometimes");
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.insertBefore("lazy");
+
+		StringList cursorList = cursor.toList();
+
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text2, cursorArray);
+	}
+
+	@Test
+	public void test_delete() {
+		String[] text = { "The", "quick", "brown", "dummy", "fox", "jumps",
+				"over", "the", "lazy", "dog" };
+
+		String[] text2 = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+
+		String[] text3 = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "" };
+
+		String deletedLine = "";
+
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.moveDown();
+		cursor.moveDown();
+		cursor.moveDown();
+		deletedLine = cursor.delete();
+
+		StringList cursorList = cursor.toList();
+
+		// Array überprüfen
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text2, cursorArray);
+
+		// Rückgabewert überprüfen
+		Assert.assertEquals("dummy", deletedLine);
+
+		// Sonderfall testen --> Letzte Zeile
+		cursor.end();
+		deletedLine = cursor.delete();
+
+		StringList cursorList1 = cursor.toList();
+
+		String[] cursorArray1 = cursorList1.toArray();
+		Assert.assertArrayEquals(text3, cursorArray1);
+
+		Assert.assertEquals(deletedLine, "dog");
+	}
+
+	@Test
+	public void test_backspace() {
+		String[] text = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "lazy", "dog" };
+
+		String[] text2 = { "The", "quick", "brown", "fox", "jumps", "over",
+				"the", "dog" };
+
+		String[] text3 = { "", "quick", "brown", "fox", "jumps", "over", "the",
+				"dog" };
+
+		String deletedLine = "";
+		String currLine = "";
+
+		StringList textList = StringList.fromArray(text);
+
+		Cursor cursor = new Cursor(textList);
+
+		cursor.end();
+		cursor.moveUp();
+		deletedLine = cursor.backspace();
+		currLine = cursor.getLine();
+
+		StringList cursorList = cursor.toList();
+
+		// Array überprüfen
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text2, cursorArray);
+
+		// Rückgabewert überprüfen
+		Assert.assertEquals("lazy", deletedLine);
+
+		// Aktuelle Zeile überprüfen
+		Assert.assertEquals("the", currLine);
+
+		// Letzte Zeile testen
+		cursor.end();
+		currLine = cursor.getLine();
+		Assert.assertEquals("dog", currLine);
+
+		// Sonderfall testen --> Erste Zeile
+		cursor.home();
+		deletedLine = cursor.backspace();
+
+		StringList cursorList1 = cursor.toList();
+
+		String[] cursorArray1 = cursorList1.toArray();
+		Assert.assertArrayEquals(text3, cursorArray1);
+
+		Assert.assertEquals(deletedLine, "The");
+	}
+
+	// Weitere Tests von Marco
+	@Test
+	public void Cursor_getLine() {
+		Cursor cursor = new Cursor();
+		Assert.assertEquals("", cursor.getLine());
+
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+		Assert.assertEquals("1", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_length() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+		Assert.assertEquals(3, cursor.length());
+	}
+
+	@Test
+	public void Cursor_position() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+		Assert.assertEquals(0, cursor.position());
+	}
+
+	@Test
+	public void Cursor_move() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+		Assert.assertEquals(0, cursor.position());
+		cursor.moveDown();
+		Assert.assertEquals(1, cursor.position());
+		cursor.moveDown();
+		Assert.assertEquals(2, cursor.position());
+		cursor.moveUp();
+		Assert.assertEquals(1, cursor.position());
+	}
+
+	@Test
+	public void Cursor_home() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.moveUp();
+		cursor.moveUp();
+		cursor.home();
+		Assert.assertEquals(0, cursor.position());
+		Assert.assertEquals("1", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_end() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.end();
+		Assert.assertEquals(2, cursor.position());
+		Assert.assertEquals("3", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_replaceLine() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.replaceLine("eins");
+		Assert.assertEquals("eins", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_insertAfter() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.insertAfter("nach 1, vor 2");
+		cursor.moveDown();
+		Assert.assertEquals("nach 1, vor 2", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_insertBefore() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.insertBefore("vor 1, nach 2");
+		cursor.moveUp();
+		Assert.assertEquals("vor 1, nach 2", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_delete() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		Assert.assertEquals("1", cursor.delete());
+		Assert.assertEquals("2", cursor.getLine());
+
+		cursor = new Cursor(textList);
+		cursor.moveDown();
+		cursor.moveDown();
+		Assert.assertEquals("3", cursor.delete());
+		Assert.assertEquals("", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_backspace() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		Assert.assertEquals("1", cursor.backspace());
+		Assert.assertEquals("", cursor.getLine());
+
+		cursor = new Cursor(textList);
+		cursor.moveDown();
+		cursor.moveDown();
+		Assert.assertEquals("3", cursor.backspace());
+		Assert.assertEquals("2", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_swapWithPrevious() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		Assert.assertEquals("1", cursor.getLine());
+		cursor.moveDown();
+		Assert.assertEquals("2", cursor.getLine());
+		Assert.assertTrue(cursor.swapWithPrevious());
+		Assert.assertEquals("1", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_swapWithNext() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		Assert.assertEquals("1", cursor.getLine());
+		cursor.moveDown();
+		Assert.assertEquals("2", cursor.getLine());
+		Assert.assertTrue(cursor.swapWithNext());
+		Assert.assertEquals("3", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_duplicateLine() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		String[] text2 = { "1", "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.duplicateLine();
+		StringList cursorList = cursor.toList();
+
+		String[] cursorArray = cursorList.toArray();
+		Assert.assertArrayEquals(text2, cursorArray);
+	}
+
+	@Test
+	public void Cursor_reverse() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		cursor.reverse();
+		cursor.home();
+		Assert.assertEquals("3", cursor.getLine());
+	}
+
+	@Test
+	public void Cursor_unDo() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+		Assert.assertFalse(cursor.undo());
+
+		cursor.duplicateLine();
+		Assert.assertTrue(cursor.undo());
+	}
+
+	@Test
+	public void Cursor_reDo() {
+		Cursor cursor = new Cursor();
+		String[] text = { "1", "2", "3" };
+		StringList textList = StringList.fromArray(text);
+		cursor = new Cursor(textList);
+
+		Assert.assertFalse(cursor.undo());
+		Assert.assertFalse(cursor.redo());
+
+		cursor.duplicateLine();
+		Assert.assertTrue(cursor.undo());
+		Assert.assertTrue(cursor.redo());
+	}
+}
